@@ -282,6 +282,31 @@ def delete_favorite_people_to_user(id_people):
     }
     return jsonify(response_body), 200
 
+# creamos el endpoint para crear usuario
+@app.route('/signup', methods=['POST'])
+def signup():
+    # El request_body o cuerpo de la solicitud ya está decodificado en formato JSON y se encuentra en la variable request.json
+    request_body = request.json
+    # Creamos variable y se la metemos dentro de user(Como otra instancia, cada user es una)
+    # le damos como valores a name y password los request que pondremos en el Postman
+    new_user = User(
+        name= request_body["name"],
+        password= request_body["password"],
+        )
+    # Le decimos que lo agregue y que lo comitee 
+    db.session.add(new_user)
+    db.session.commit()
+
+    # generamos el token de este usuario
+    access_token = create_access_token(identity=new_user.name)
+
+    response_body = {
+        "msg": "the user has been created",
+        "access_token": access_token
+    }
+
+    return jsonify(response_body), 200
+
 
 # creamos el endpoint que nos permite hacer el login  
 # Para que la app sepa que el usuario es el, tendremos que hacer rutas protegidas especificadas en la documentación
