@@ -55,7 +55,7 @@ def get_all_people():
     # Si lo que recibimos es un array vacio, devolveremos el error 404 con el mensaje People not found
     if people_data == []:
         return jsonify({
-            "msg": "People not found"
+            "msg": "Character not found"
         }), 404
     
     response_body = {
@@ -77,7 +77,7 @@ def get_one_people(people_id):
     
     if people_query == None:
         return jsonify({
-            "msg": "People not found"
+            "msg": "Character not found"
         }), 404
     
     response_body = {
@@ -114,7 +114,7 @@ def get_one_planet(planet_id):
     
     if planet_query == None:
         return jsonify({
-            "msg": "People not found"
+            "msg": "Planet not found"
         }), 404
     
     response_body = {
@@ -143,47 +143,49 @@ def get_all_users():
     return jsonify(response_body), 200
 
 
-#obten los favoritos de todos los usuarios
-# @app.route('/user/favorites/', methods=['GET'])
-# # @jwt_required() #traemos el token
-# def get_user_favorites():
+# obten los favoritos de todos los usuarios
+@app.route('/user/favorites/', methods=['GET'])
+# @jwt_required() #traemos el token
+def get_user_favorites():
 
-# #     # obtenermos la identity del usuario actual
-# #     current_user = get_jwt_identity()
+#     # obtenermos la identity del usuario actual
+#     current_user = get_jwt_identity()
 
-# #      # buscamos el usuario dentro del modelo User
-# #     user = User.query.filter_by(name=current_user).first()
-# #     # si no lo encontramos
-# #     if not user:
-# #         return jsonify({"msg": "Usuario no encontrado"}), 404
+#      # buscamos el usuario dentro del modelo User
+#     user = User.query.filter_by(name=current_user).first()
+#     # si no lo encontramos
+#     if not user:
+#         return jsonify({"msg": "Usuario no encontrado"}), 404
 
-# #     # Obtenemos los favoritos del usuario actual
-# #     user_favorites_query = Favorites.query.filter_by(id_user=user.id).all()
-# #     user_favorites_query = list(map(lambda item: item.serialize(), user_favorites_query))
+#     # Obtenemos los favoritos del usuario actual
+    # user_favorites_query = Favorites.query.filter_by(id_user=user.id).all()
+    # user_favorites_query = list(map(lambda item: item.serialize(), user_favorites_query))
 
-# #     if not user_favorites_query:
-# #         return jsonify({"msg": "No hay favoritos registrados"}), 404
+#     if not user_favorites_query:
+#         return jsonify({"msg": "No hay favoritos registrados"}), 404
 
-# #     response_body = {
-# #         "msg": "ok",
-# #         "favorites": user_favorites_query
-# #     }
-
-# #     return jsonify(response_body), 200
-
-#     user_favorites_data = list(map(lambda item: item.serialize(), user_favorites_query)) #estamos haciendo una consulta a la User para que traiga todos
-#     print(user_favorites_data)
-    
-#     if user_favorites_data == []:
-#         return jsonify({
-#             "msg": "There are no favorites on the list"
-#         }), 404
-    
 #     response_body = {
 #         "msg": "ok",
-#         "User": user_favorites_data
+#         "favorites": user_favorites_query
 #     }
+
 #     return jsonify(response_body), 200
+    # Aqui creamos una variable para traer todos los users
+    user_favorites_query = User.query.all()
+    # Aquí hacemos un map de los filter 
+    user_favorites_data = list(map(lambda item: item.serialize(), user_favorites_query)) #estamos haciendo una consulta a la User para que traiga todos
+    # print(user_favorites_data)
+    
+    if user_favorites_data == []:
+        return jsonify({
+            "msg": "There are no favorites on the list"
+        }), 404
+    
+    response_body = {
+        "msg": "ok",
+        "User": user_favorites_data
+    }
+    return jsonify(response_body), 200
 
 
 # añade un planeta favorito al usuario actual
@@ -239,12 +241,11 @@ def delete_favorite_planet_to_user(id_planet):
 
     body = request.json
 
-    # delete_favorit_planet = Favoritos.query.get(id_user = body["id_user"], id_planets = id_planet)
-    db.session.delete(delete_favorite_planet_to_user)
+    delete_favorite_planet = Favorites.query.filter_by(id_planets = id_planet).first()
+    db.session.delete(delete_favorite_planet)
     db.session.commit()
-    print(delete_favorite_planet_to_user)
 
-    # if new_favorit_planet == "-":
+    # if new_favorite_planet == "-":
     #     return jsonify({
     #         "msg": "User not found"
     #     }), 404
@@ -255,6 +256,26 @@ def delete_favorite_planet_to_user(id_planet):
     return jsonify(response_body), 200
 
 
+# elimina un personaje favorito
+@app.route('/favorites/people/<int:id_people>', methods=['DELETE'])
+def delete_favorite_people_to_user(id_people):
+
+    body = request.json
+
+    delete_favorite_people = Favorites.query.filter_by(id_people = id_people).first()
+    db.session.delete(delete_favorite_people)
+    db.session.commit()
+    # print(delete_favorite_planet)
+
+    # if delete_favorite_planet == "-":
+    #      return jsonify({
+    #          "msg": "User not found"
+    #      }), 404
+    
+    response_body = {
+        "msg": "the character has been deleted from Favorites",
+    }
+    return jsonify(response_body), 200
 
 
 # creamos el endpoint que nos permite hacer el login  
