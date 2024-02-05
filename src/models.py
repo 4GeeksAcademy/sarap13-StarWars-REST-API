@@ -8,7 +8,8 @@ class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(120), unique=True, nullable=False)
     password = db.Column(db.String(80), unique=False, nullable=False)
-    # favorites_user = db.relationship('favorites', backref='users', lazy=True)
+    
+    favorites_user = db.relationship('Favorites', backref='user', lazy=True)
 
     def __repr__(self):
         return '<User %r>' % self.id
@@ -37,17 +38,19 @@ class People(db.Model):
     edited = db.Column(db.String(250), nullable=False)
     url = db.Column(db.String(250), nullable=False)
     # id_films = db.Column(db.Integer, ForeignKey('films.id'))
-    id_starships = db.Column(db.Integer, db.ForeignKey('starships.id'))
-    id_species = db.Column(db.Integer, db.ForeignKey('species.id'))
+    # id_starships = db.Column(db.Integer, db.ForeignKey('starships.id'))
     id_vehicles = db.Column(db.Integer, db.ForeignKey('vehicles.id'))
+    id_species = db.Column(db.Integer, db.ForeignKey('species.id'))
+
     # Este codigo nos ayuda a relacionar tablas. Siempre va el modelo/tabla padre la primera letra mayuscula
     #  el primer '' de donde traemos la info , el segundo la tabla que coge la info y es el nombre de la tabla en min
     # Esto genera otra columna con la información de la tabla people
-    # people_favorites = relationship('Favorites', backref='people', lazy=True)
+    people_favorites = db.relationship('Favorites', backref='people', lazy=True)
     # En este caso traemos a la tabla people los vehiculos que cada uno utiliza.
-    vehicles = db.relationship('Vehicles', backref='people', lazy=True)
-    # species = db.relationship('Species', backref='people', lazy=True)
+    vehicle = db.relationship('Vehicles', backref='people', lazy=True)
+    specie = db.relationship('Species', backref='people', lazy=True)
     # starships = relationship('Starships', backref='people', lazy=True)
+    planets = db.relationship('Planets', backref='people', lazy=True)
 
     def __repr__(self):
         return '<People %r>' % self.id
@@ -75,9 +78,10 @@ class Planets(db.Model):
     created = db.Column(db.String(250), nullable=False)
     edited = db.Column(db.String(250), nullable=False)
     url = db.Column(db.String(250), nullable=False)
-    # id_people = db.Column(db.Integer, db.ForeignKey('people.id'))
+    id_people = db.Column(db.Integer, db.ForeignKey('people.id'))
     # id_films = db.Column(db.Integer, db.ForeignKey('films.id'))
-    # planets_favorites = db.relationship('favorites', backref='planets', lazy=True)
+    planets_favorites = db.relationship('Favorites', backref='planets', lazy=True)
+
     # people = db.relationship('People', backref='planets', lazy=True)
 
 
@@ -111,7 +115,7 @@ class Vehicles(db.Model):
     url = db.Column(db.String(250), nullable=False)
     # id_people = db.Column(db.Integer, db.ForeignKey('people.id'))
     # id_films = db.Column(db.Integer, db.ForeignKey('films.id'))
-    # vehicles_favorites = db.relationship('favorites', backref='vehicles', lazy=True)
+    vehicles_favorites = db.relationship('Favorites', backref='vehicles', lazy=True)
 
     def __repr__(self):
         return '<Vehicles %r>' % self.id
@@ -140,9 +144,9 @@ class Species(db.Model):
     created = db.Column(db.String(250), nullable=False)
     edited = db.Column(db.String(250), nullable=False)
     url = db.Column(db.String(250), nullable=False)
-    id_people = db.Column(db.Integer, db.ForeignKey('people.id'))
+    # id_people = db.Column(db.Integer, db.ForeignKey('people.id'))
     # id_films = db.Column(db.Integer, db.ForeignKey('films.id'))
-    # vehicles_favorites = db.relationship('favorites', backref='vehicles', lazy=True)
+    # species_favorites = db.relationship('Favorites', backref='species', lazy=True)
 
     def __repr__(self):
         return '<Species %r>' % self.id
@@ -235,6 +239,8 @@ class Favorites(db.Model):
     id_species = db.Column(db.Integer, db.ForeignKey('species.id'))
     id_films = db.Column(db.Integer, db.ForeignKey('films.id'))
     id_starships = db.Column(db.Integer, db.ForeignKey('starships.id'))
+    id_planets = db.Column(db.Integer, db.ForeignKey('planets.id'))
+
 
     def __repr__(self):
         return '<Favorites %r>' % self.id
