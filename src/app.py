@@ -9,7 +9,7 @@ from flask_cors import CORS
 from utils import APIException, generate_sitemap
 from admin import setup_admin
 from models import db, User, People, Planets, Favorites #importamos las tablas que usaremos 
-# from flask_jwt_extended import create_access_token, get_jwt_identity, jwt_required, JWTManager
+from flask_jwt_extended import create_access_token, get_jwt_identity, jwt_required, JWTManager
 
 
 app = Flask(__name__)
@@ -28,8 +28,8 @@ CORS(app)
 setup_admin(app)
 
 # Setup the Flask-JWT-Extended extension
-# app.config["JWT_SECRET_KEY"] = "super-secret"  # Change this!
-# jwt = JWTManager(app)
+app.config["JWT_SECRET_KEY"] = "super-secret"  # Change this!
+jwt = JWTManager(app)
 
 # Handle/serialize errors like a JSON object
 @app.errorhandler(APIException)
@@ -144,32 +144,37 @@ def get_all_users():
 
 
 # obten los favoritos de todos los usuarios
+# Se nos pide que aparezca solo el favorito del usuario
+# Hemos modificado el modelo favorites en models.py
 @app.route('/user/favorites/', methods=['GET'])
-# @jwt_required() #traemos el token
+@jwt_required() #traemos el token
 def get_user_favorites():
+# obtenermos la identity del usuario actual
+    current_user = get_jwt_identity()
 
-#     # obtenermos la identity del usuario actual
-#     current_user = get_jwt_identity()
+# buscamos el usuario dentro del modelo User
+    user_query = User.query.filter_by(name=current_user).first()
+# si no lo encontramos
+    if not user_query:
+        return jsonify({"msg": "The user hasn't been found"}), 404
 
-#      # buscamos el usuario dentro del modelo User
-#     user = User.query.filter_by(name=current_user).first()
-#     # si no lo encontramos
-#     if not user:
-#         return jsonify({"msg": "Usuario no encontrado"}), 404
+# Obtenemos los favoritos del usuario actual
+    user_favorites_query = Favorites.query.filter_by(id_user=user_query.id).all() #traeme todos los favoritos del id_user
+    user_favorites_query_data = list(map(lambda item: item.serialize(), user_favorites_query))  #hazme un map y muestralos
 
-#     # Obtenemos los favoritos del usuario actual
-    # user_favorites_query = Favorites.query.filter_by(id_user=user.id).all()
-    # user_favorites_query = list(map(lambda item: item.serialize(), user_favorites_query))
+    # Si no hay favoritos
+    if not user_favorites_query:
+        return jsonify({"msg": "There aren't any favorites yet"}), 404
 
-#     if not user_favorites_query:
-#         return jsonify({"msg": "No hay favoritos registrados"}), 404
+    response_body = {
+        "msg": "ok",
+        "favorites": user_favorites_data
+    }
 
-#     response_body = {
-#         "msg": "ok",
-#         "favorites": user_favorites_query
-#     }
+    return jsonify(response_body), 200
 
-#     return jsonify(response_body), 200
+###########
+# Este codigo sería para traer todos los favoritos de todos los usarios
     # Aqui creamos una variable para traer todos los users
     user_favorites_query = User.query.all()
     # Aquí hacemos un map de los filter 
@@ -200,7 +205,7 @@ def add_favorite_planet_to_user(id_planet):
     db.session.add(new_favorite_planet)
     db.session.commit()
     # creamos el person en postman y miramos en la base de datos a ver recargamos pagina si no sale para que se actualice.
-    print(new_favorite_planet)
+    # print(new_favorite_planet)
 
     # if new_favorit_planet == "-":
     #     return jsonify({
@@ -280,36 +285,35 @@ def delete_favorite_people_to_user(id_people):
 
 # creamos el endpoint que nos permite hacer el login  
 # Para que la app sepa que el usuario es el, tendremos que hacer rutas protegidas especificadas en la documentación
-# @app.route("/login", methods=["POST"])
-# def login():
-#     # Las variables tienen que cuadrar con las característica del modelo de User
-#     name = request.json.get("name", None)
-#     password = request.json.get("password", None)
-#     # Para acceder a un usuario de nuestra tabla, tendremos que hacer un find en una variable para que nos aparezca con el filter por el nombre
-#     user_query = User.query.filter_by(name=name).first()
+@app.route("/login", methods=["POST"])
+def login():
+    # Las variables tienen que cuadrar con las característica del modelo de User
+    name = request.json.get("name", None)
+    password = request.json.get("password", None)
+    # Para acceder a un usuario de nuestra tabla, tendremos que hacer un find en una variable para que nos aparezca con el filter por el nombre
+    user_query = User.query.filter_by(name=name).first()
 
-#     if name != user_query.name or password != user_query.password:
-#         return jsonify({"msg": "Bad username or password"}), 401
+    if name != user_query.name or password != user_query.password:
+        return jsonify({"msg": "Bad username or password"}), 401
+
+    access_token = create_access_token(identity=name)
+    return jsonify(access_token=access_token)
 
 
-
-#     access_token = create_access_token(identity=name)
-#     return jsonify(access_token=access_token)
-
-# Protect a route with jwt_required, which will kick out requests
-# without a valid JWT present.
 # ENDPOINT de la ruta protegida
-# @app.route("/profile", methods=["GET"])
-# @jwt_required()
-# def protected():
-#     # Access the identity of the current user with get_jwt_identity
-#     # metemos en una variable el usuario que esta activo
-#     current_user = get_jwt_identity()
-#     # creamos variable donde filtramos en la tabla user el actual usuario 
-#     info_user_favorites = User.query.filter_by(name=current_user).first()
+@app.route("/profile", methods=["GET"])
+# Esta linea siempre irá aquí para traernos el token que se nos ha facilitado 
+@jwt_required()
+def protected():
+    # metemos en una variable el usuario que esta activo
+    current_user = get_jwt_identity()
+    # creamos variable donde filtramos en la tabla user el actual usuario 
+    info_user_favorites = User.query.filter_by(name=current_user).first()
 
-#     # devolvemos el usuario con la informacion de favoritos 
-#     return jsonify({"user": info_user_favorites.serialize()}), 200
+    # devolvemos el usuario con la informacion de favoritos 
+    return jsonify({"user": info_user_favorites.serialize()}), 200
+
+
 
 if __name__ == '__main__':
     PORT = int(os.environ.get('PORT', 3000))

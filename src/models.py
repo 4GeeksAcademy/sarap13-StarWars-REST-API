@@ -237,7 +237,7 @@ class Favorites(db.Model):
     id_people = db.Column(db.Integer, db.ForeignKey('people.id'))
     id_vehicles = db.Column(db.Integer, db.ForeignKey('vehicles.id'))
     id_species = db.Column(db.Integer, db.ForeignKey('species.id'))
-    id_films = db.Column(db.Integer, db.ForeignKey('films.id'))
+    # id_films = db.Column(db.Integer, db.ForeignKey('films.id'))
     id_starships = db.Column(db.Integer, db.ForeignKey('starships.id'))
     id_planets = db.Column(db.Integer, db.ForeignKey('planets.id'))
 
@@ -246,9 +246,53 @@ class Favorites(db.Model):
         return '<Favorites %r>' % self.id
 
     # Serialize permite retornar un objeto con los valores que queremos mostrar.
+    # Creamos ifs para cada tipo de favorito(planet ,people...)
     def serialize(self):
+        # Si en id_people de fav hay algo crearemos people y buscaremos en el mod people el id que tenemos como id_people
+        if self.id_people is not None:
+            people = People.query.filter_by(id=self.id_people).first()
+            return{
+                #devolveremos el id nuestro, el del usuario y la info de people serializada
+                "id": self.id,
+                "user": self.id_user,
+                "info_people": people.serialize()
+            }
+        if self.id_planets is not None:
+            planet = Planets.query.filter_by(id=self.id_planets).first()
+            return{
+                "id": self.id,
+                "user": self.id_user,
+                "info_planet": planet.serialize()
+            }
+        if self.id_vehicles is not None:
+            vehicle = Vehicles.query.filter_by(id=self.id_vehicles).first()
+            return{
+                "id": self.id,
+                "user": self.id_user,
+                "info_vehicle": planet.serialize()
+            }
+        if self.id_species is not None:
+            specie = Species.query.filter_by(id=self.id_species).first()
+            return{
+                "id": self.id,
+                "user": self.id_user,
+                "info_specie": specie.serialize()
+            }
+        if self.id_starships is not None:
+            starship = Starships.query.filter_by(id=self.id_starships).first()
+            return{
+                "id": self.id,
+                "user": self.id_user,
+                "info_starship": starship.serialize()
+            }
         return {
             "id": self.id,
-            # "name": self.name,
+            "user": self.id_user,
+            "info_people": None if self.id_people is None else people.serialize(),
+            "info_planet": None if self.id_planets is None else planet.serialize(),
+            "info_vehicle": None if self.id_vehicles is None else vehicle.serialize(),
+            "info_specie": None if self.id_species is None else specie.serialize(),
+            "info_starship": None if self.id_starship is None else starship.serialize()
             # do not serialize the password, its a security breach
+            # En el return general de favorites devolveremos el id, el user id y todas las info de todos los tipos
         }
